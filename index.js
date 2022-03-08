@@ -6,7 +6,9 @@ const url = require("url");
 const bodyParser = require("body-parser");
 const WebSocket = require("ws");
 
-const wss = new WebSocket.Server({ noServer: true });
+const wss = new WebSocket.Server({
+  server,
+});
 
 app.use(
   cors({
@@ -28,9 +30,18 @@ app.use(
 );
 
 //esp32cam websocket
-wss.on("connection", (socket) => {
-  console.log("connected");
-  console.log(socket.id);
+wss.on("connection", (ws, request, client) => {
+  console.log("connected ", client);
+  // console.log(socket.id);
+
+  ws.on("message", (data) => {
+    console.log("received: %s", data);
+    wss.clients.forEach(function each(client) {
+      if (client.readyState === WebSocket.OPEN) {
+        client.send(String(data));
+      }
+    });
+  });
 });
 
 const port = process.env.PORT || 3000;
